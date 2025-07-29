@@ -201,6 +201,16 @@ Parameters:
           Fn::Equals:
             - ExistingVPC
             - ${VpcOption}
+  ArkApiKey:
+    Type: String
+    Label:
+      en: Ark API Key
+      zh-cn: 火山方舟 API Key
+  ArkModelId:
+    Type: String
+    Label:
+      en: Ark Model Id
+      zh-cn: 火山方舟模型ID
 Resources:
   # 新建vpc
   EcsVpc:
@@ -292,6 +302,10 @@ Resources:
       CommandContent:
         Fn::Sub:
           - |
+            cp coze-studio/backend/conf/model/template/model_template_ark_doubao-seed-1.6.yaml coze-studio/backend/conf/model/ark_doubao-seed-1.6.yaml
+            sed -i -E 's/(^ {8}api_key: ).*/\1"'${ArkApiKey}'"/' "coze-studio/backend/conf/model/ark_doubao-seed-1.6.yaml"
+            sed -i -E 's/(^ {8}model: ).*/\1"'${ArkModelId}'"/' "coze-studio/backend/conf/model/ark_doubao-seed-1.6.yaml"
+
             # 创建开机自启动配置和状态检查脚本
             function create_systemd_config() {
                 file_path="/etc/systemd/system/quickstart-coze-studio.service"
@@ -308,8 +322,8 @@ Resources:
             [Service]
             Type=oneshot
             RemainAfterExit=yes
-            WorkingDirectory=/root
-            ExecStart=/bin/bash -c '/usr/bin/docker compose -f /coze-studio/docker/docker-compose.yml up -d && /usr/local/bin/check-container-status'
+            WorkingDirectory=/root/coze-studio/docker
+            ExecStart=/bin/bash -c '/usr/bin/docker compose --profile "*" restart coze-server && /usr/local/bin/check-container-status'
             ExecStop=/usr/bin/docker compose down
             TimeoutStartSec=0
 
@@ -383,7 +397,8 @@ Resources:
             docker compose -f "$COMPOSE_FILE" ps --all
             exit 1
             EOF
-
+            }
+            create_systemd_config
             chmod +x /usr/local/bin/check-container-status
             systemctl enable quickstart-coze-studio
             systemctl start quickstart-coze-studio
@@ -419,6 +434,11 @@ Metadata:
           - InstancePassword
         Label:
           default: 资源配置
+      - Parameters:
+          - ArkApiKey
+          - ArkModelId
+        Label:
+          default: 模型配置
       - Parameters:
           - ZoneId
           - VpcOption

@@ -78,7 +78,5 @@ ImageBuilder:
 
       git clone https://github.com/coze-dev/coze-studio.git
       cd coze-studio/docker
-      cd docker
       cp .env.example .env
-      docker compose -f docker-compose.yml build
-      docker compose -f docker-compose.yml pull 2>&1 | stdbuf -oL grep -viE 'Downloading|sha256|extracting|KiB|Downloaded' || true;
+      /usr/bin/docker compose --profile "*" up -d
